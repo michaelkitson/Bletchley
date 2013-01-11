@@ -9,7 +9,6 @@ HashSHA3: HashSHA3.o SHA3.o
 HashSHA3.o: HashSHA3.cpp
 TestSHA3.o: TestSHA3.cpp
 SHA3.o:      SHA3.cpp SHA3.h HashFunction.h
-Utilities.o: Utilities.cpp
 
 clean:
 	rm TestSHA3.o HashSHA3.o SHA3.o
