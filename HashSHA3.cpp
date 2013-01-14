@@ -34,6 +34,8 @@ int main( int argc, char *argv[] ){
     std::cout << "Performing SHA3-" << digestSize << " on: '" << message
               << "'" << std::endl;
 
-    SHA3 x( digestSize );
-    HashFunction *hasher = &x;
+    SHA3 sha3( digestSize/8 );
+    sha3.hashString( message );
+    char *hexDigest = sha3.digestInHex();
+    std::cout << hexDigest << std::endl;
 }
