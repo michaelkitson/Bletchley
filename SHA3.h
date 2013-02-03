@@ -48,6 +48,7 @@ class SHA3 : public HashFunction{
     unsigned char *_messageBuffer;  // rate bits wide, defined during construction
     unsigned char *_bufferLocation; // used for writing and to know when to flush the buffer
 
+    void _zeroState();
     void _performRounds( int rounds );
     void _absorbBuffer();
 
