@@ -47,11 +47,10 @@ int rotationOffsets[5][5] = {
 
 SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
     // zero the state
-    _zeroState();
     _spongeCapacity = 2 * 8 * _digestSize;
     _spongeRate = 1600 - _spongeCapacity;
     _messageBuffer = new unsigned char[_spongeRate];
-    _bufferLocation = _messageBuffer;
+    _reset();
 }
 
 ////////// Accessors //////////
@@ -112,7 +111,7 @@ void SHA3::digest( unsigned char d[] ){
 
     // Squeeze
     memcpy( d, _state, digestSize() );
-    _zeroState(); // Ready the function to hash another message
+    _reset(); // Ready the function to hash another message
 }
 
 char *SHA3::digestInHex(){
@@ -132,12 +131,13 @@ char *SHA3::digestInHex(){
 
 ////////// Internals //////////
 
-void SHA3::_zeroState(){
+void SHA3::_reset(){
     for( int x = 0; x < 5; x++ ){
         for( int y = 0; y < 5; y++ ){
             _state[x][y] = 0;
         }
     }
+    _bufferLocation = _messageBuffer;
 }
 
 void SHA3::_absorbBuffer(){

@@ -1,5 +1,5 @@
-SHA3.o
+*.o
 HashSHA3
-HashSHA3.o
 TestSHA3
-TestSHA3.o
+HashZeroBytes
+LongTest

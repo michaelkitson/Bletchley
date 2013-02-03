@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include "HashFunction.h"
 #include "SHA3.h"
 
