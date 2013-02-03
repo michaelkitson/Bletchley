@@ -33,3 +33,20 @@ real  2m5.592s
 user  2m5.331s
 sys 0m0.132s
 ```
+### Timing on an Xeon X5560 (glados.cs.rit.edu)
+Example timed hashing 100 MiB of zeros
+```sh
+$ time ./HashZeroBytes 100000000
+
+real  0m38.935s
+user	0m38.858s
+sys	0m0.000s
+```
+Example hashing of 400000 8K messages (~3.27 GB) of pseudorandom data
+```sh
+$ time ./LongTest 400000
+
+real  2m48.837s
+user	2m48.487s
+sys	0m0.012s
+```
