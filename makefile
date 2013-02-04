@@ -8,15 +8,16 @@ all: TestSHA3 HashSHA3 HashZeroBytes LongTest
 debug: override CPPFLAGS += -ggdb
 debug: all
 
-o3: override CPPFLAGS += -O3
-o3: all
+SHA3-o3:
+	$(CXX) $(CPPFLAGS) -O3 -c -o SHA3.o SHA3.cpp
+o3:  SHA3-o3 all
 
 TestSHA3: TestSHA3.o SHA3.o
 HashSHA3: HashSHA3.o SHA3.o
 HashZeroBytes: HashZeroBytes.o SHA3.o
 LongTest: LongTest.o SHA3.o
 
-.PHONY: clean realclean rc
+.PHONY: clean realclean rc debug all o3 SHA3-o3
 clean:
 	rm SHA3.o TestSHA3.o HashSHA3.o HashZeroBytes.o LongTest.o
 rc: realclean
