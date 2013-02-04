@@ -96,10 +96,7 @@ void SHA3::digest( unsigned char d[] ){
     // Pad with 10*1 padding
     _bufferLocation[0] = 1;
     _bufferLocation++;
-    while( _bufferLocation != &_messageBuffer[_spongeRate>>3] ){
-        _bufferLocation[0] = 0;
-        _bufferLocation++;
-    }
+    bzero( _bufferLocation, &_messageBuffer[_spongeRate>>3] - _bufferLocation );
     _messageBuffer[(_spongeRate >> 3) - 1] |= 0x80;
     _absorbBuffer();
 
