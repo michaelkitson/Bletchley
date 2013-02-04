@@ -147,11 +147,11 @@ void SHA3::_performRounds( int rounds ){
         c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3];
         c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4];
 
-        d[0] = c[4] ^ ROT_L( c[1], 1);
-        d[1] = c[0] ^ ROT_L( c[2], 1);
-        d[2] = c[1] ^ ROT_L( c[3], 1);
-        d[3] = c[2] ^ ROT_L( c[4], 1);
-        d[4] = c[3] ^ ROT_L( c[0], 1);
+        d[0] = c[4] ^ ROT_L( c[1], 1 );
+        d[1] = c[0] ^ ROT_L( c[2], 1 );
+        d[2] = c[1] ^ ROT_L( c[3], 1 );
+        d[3] = c[2] ^ ROT_L( c[4], 1 );
+        d[4] = c[3] ^ ROT_L( c[0], 1 );
 
         _state[0][0] ^= d[0];
         _state[0][1] ^= d[1];
