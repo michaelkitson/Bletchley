@@ -124,7 +124,7 @@ char *SHA3::digestInHex(){
 
 ////////// Internals //////////
 
-void SHA3::_reset(){
+inline void SHA3::_reset(){
     bzero( _state, 200 ); //25 64-byte lanes
     _bufferLocation = _messageBuffer;
 }
@@ -137,7 +137,7 @@ void SHA3::_absorbBuffer(){
     _performRounds( ROUNDS );
 }
 
-void SHA3::_performRounds( int rounds ){
+inline void SHA3::_performRounds( int rounds ){
     keccakLane_t b[5][5];
     keccakLane_t c[5];
     keccakLane_t d[5];
