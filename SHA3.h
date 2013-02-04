@@ -50,6 +50,7 @@ class SHA3 : public HashFunction{
 
     void _reset();
     void _performRounds( int rounds );
+    void _performRounds_24(); // Optimized function to perform exactly 24 rounds
     void _absorbBuffer();
 
     // Debugging

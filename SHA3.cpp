@@ -143,24 +143,145 @@ void SHA3::_absorbBuffer(){
     for( int i = 0; i*64 < _spongeRate; i++ ){
         _state[i/5][i%5] |= x[i];
     }
-    _performRounds( ROUNDS );
+    _performRounds_24();
 }
 
-void SHA3::_performRounds( int rounds ){
+void SHA3::_performRounds_24(){
+    keccakLane_t b[5][5];
+    keccakLane_t c[5];
+    keccakLane_t d[5];
+    
+    // Start of a giant macro
+#define KECCAK_ROUND() c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0]; \
+    c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1]; \
+    c[2] = _state[0][2] ^ _state[1][2] ^ _state[2][2] ^ _state[3][2] ^ _state[4][2]; \
+    c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3]; \
+    c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4]; \
+    d[0] = c[4] ^ ROT_L( c[1], 1); \
+    d[1] = c[0] ^ ROT_L( c[2], 1); \
+    d[2] = c[1] ^ ROT_L( c[3], 1); \
+    d[3] = c[2] ^ ROT_L( c[4], 1); \
+    d[4] = c[3] ^ ROT_L( c[0], 1); \
+    _state[0][0] ^= d[0]; \
+    _state[0][1] ^= d[1]; \
+    _state[0][2] ^= d[2]; \
+    _state[0][3] ^= d[3]; \
+    _state[0][4] ^= d[4]; \
+    _state[1][0] ^= d[0]; \
+    _state[1][1] ^= d[1]; \
+    _state[1][2] ^= d[2]; \
+    _state[1][3] ^= d[3]; \
+    _state[1][4] ^= d[4]; \
+    _state[2][0] ^= d[0]; \
+    _state[2][1] ^= d[1]; \
+    _state[2][2] ^= d[2]; \
+    _state[2][3] ^= d[3]; \
+    _state[2][4] ^= d[4]; \
+    _state[3][0] ^= d[0]; \
+    _state[3][1] ^= d[1]; \
+    _state[3][2] ^= d[2]; \
+    _state[3][3] ^= d[3]; \
+    _state[3][4] ^= d[4]; \
+    _state[4][0] ^= d[0]; \
+    _state[4][1] ^= d[1]; \
+    _state[4][2] ^= d[2]; \
+    _state[4][3] ^= d[3]; \
+    _state[4][4] ^= d[4]; \
+    b[0][0] = ROT_L( _state[0][0], rotationOffsets[0][0] ); \
+    b[1][3] = ROT_L( _state[1][0], rotationOffsets[0][1] ); \
+    b[2][1] = ROT_L( _state[2][0], rotationOffsets[0][2] ); \
+    b[3][4] = ROT_L( _state[3][0], rotationOffsets[0][3] ); \
+    b[4][2] = ROT_L( _state[4][0], rotationOffsets[0][4] ); \
+    b[0][2] = ROT_L( _state[0][1], rotationOffsets[1][0] ); \
+    b[1][0] = ROT_L( _state[1][1], rotationOffsets[1][1] ); \
+    b[2][3] = ROT_L( _state[2][1], rotationOffsets[1][2] ); \
+    b[3][1] = ROT_L( _state[3][1], rotationOffsets[1][3] ); \
+    b[4][4] = ROT_L( _state[4][1], rotationOffsets[1][4] ); \
+    b[0][4] = ROT_L( _state[0][2], rotationOffsets[2][0] ); \
+    b[1][2] = ROT_L( _state[1][2], rotationOffsets[2][1] ); \
+    b[2][0] = ROT_L( _state[2][2], rotationOffsets[2][2] ); \
+    b[3][3] = ROT_L( _state[3][2], rotationOffsets[2][3] ); \
+    b[4][1] = ROT_L( _state[4][2], rotationOffsets[2][4] ); \
+    b[0][1] = ROT_L( _state[0][3], rotationOffsets[3][0] ); \
+    b[1][4] = ROT_L( _state[1][3], rotationOffsets[3][1] ); \
+    b[2][2] = ROT_L( _state[2][3], rotationOffsets[3][2] ); \
+    b[3][0] = ROT_L( _state[3][3], rotationOffsets[3][3] ); \
+    b[4][3] = ROT_L( _state[4][3], rotationOffsets[3][4] ); \
+    b[0][3] = ROT_L( _state[0][4], rotationOffsets[4][0] ); \
+    b[1][1] = ROT_L( _state[1][4], rotationOffsets[4][1] ); \
+    b[2][4] = ROT_L( _state[2][4], rotationOffsets[4][2] ); \
+    b[3][2] = ROT_L( _state[3][4], rotationOffsets[4][3] ); \
+    b[4][0] = ROT_L( _state[4][4], rotationOffsets[4][4] ); \
+    _state[0][0] = b[0][0] ^ ((~b[1][0]) & b[2][0]); \
+    _state[1][0] = b[0][1] ^ ((~b[1][1]) & b[2][1]); \
+    _state[2][0] = b[0][2] ^ ((~b[1][2]) & b[2][2]); \
+    _state[3][0] = b[0][3] ^ ((~b[1][3]) & b[2][3]); \
+    _state[4][0] = b[0][4] ^ ((~b[1][4]) & b[2][4]); \
+    _state[0][1] = b[1][0] ^ ((~b[2][0]) & b[3][0]); \
+    _state[1][1] = b[1][1] ^ ((~b[2][1]) & b[3][1]); \
+    _state[2][1] = b[1][2] ^ ((~b[2][2]) & b[3][2]); \
+    _state[3][1] = b[1][3] ^ ((~b[2][3]) & b[3][3]); \
+    _state[4][1] = b[1][4] ^ ((~b[2][4]) & b[3][4]); \
+    _state[0][2] = b[2][0] ^ ((~b[3][0]) & b[4][0]); \
+    _state[1][2] = b[2][1] ^ ((~b[3][1]) & b[4][1]); \
+    _state[2][2] = b[2][2] ^ ((~b[3][2]) & b[4][2]); \
+    _state[3][2] = b[2][3] ^ ((~b[3][3]) & b[4][3]); \
+    _state[4][2] = b[2][4] ^ ((~b[3][4]) & b[4][4]); \
+    _state[0][3] = b[3][0] ^ ((~b[4][0]) & b[0][0]); \
+    _state[1][3] = b[3][1] ^ ((~b[4][1]) & b[0][1]); \
+    _state[2][3] = b[3][2] ^ ((~b[4][2]) & b[0][2]); \
+    _state[3][3] = b[3][3] ^ ((~b[4][3]) & b[0][3]); \
+    _state[4][3] = b[3][4] ^ ((~b[4][4]) & b[0][4]); \
+    _state[0][4] = b[4][0] ^ ((~b[0][0]) & b[1][0]); \
+    _state[1][4] = b[4][1] ^ ((~b[0][1]) & b[1][1]); \
+    _state[2][4] = b[4][2] ^ ((~b[0][2]) & b[1][2]); \
+    _state[3][4] = b[4][3] ^ ((~b[0][3]) & b[1][3]); \
+    _state[4][4] = b[4][4] ^ ((~b[0][4]) & b[1][4]);
+    // END of the giant macro
+
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[0];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[1];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[2];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[3];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[4];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[5];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[6];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[7];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[8];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[9];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[10];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[11];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[12];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[13];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[14];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[15];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[16];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[17];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[18];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[19];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[20];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[21];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[22];
+    KECCAK_ROUND(); _state[0][0] ^= roundConstants[23];
+
+    #undef KECCAK_ROUND()
+}
+
+    void SHA3::_performRounds( int rounds ){
     keccakLane_t b[5][5];
     keccakLane_t c[5];
     keccakLane_t d[5];
 
     for( int i = 0; i < rounds; i++ ){
-        // Theta step
-        c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
-        c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1];
-        c[2] = _state[0][2] ^ _state[1][2] ^ _state[2][2] ^ _state[3][2] ^ _state[4][2];
-        c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3];
-        c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4];
+    // Theta step
+    c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
+    c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1];
+    c[2] = _state[0][2] ^ _state[1][2] ^ _state[2][2] ^ _state[3][2] ^ _state[4][2];
+    c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3];
+    c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4];
 
-        d[0] = c[4] ^ ROT_L( c[1], 1);
-        d[1] = c[0] ^ ROT_L( c[2], 1);
+    d[0] = c[4] ^ ROT_L( c[1], 1);
+    d[1] = c[0] ^ ROT_L( c[2], 1);
         d[2] = c[1] ^ ROT_L( c[3], 1);
         d[3] = c[2] ^ ROT_L( c[4], 1);
         d[4] = c[3] ^ ROT_L( c[0], 1);
