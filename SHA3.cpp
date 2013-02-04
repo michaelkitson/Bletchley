@@ -36,14 +36,6 @@ const keccakLane_t roundConstants[] = {
     0x8000000080008008
 };
 
-int rotationOffsets[5][5] = {
-    { 0, 36,  3, 41, 18},
-    { 1, 44, 10, 45,  2},
-    {62,  6, 43, 15, 61},
-    {28, 55, 25, 21, 56},
-    {27, 20, 39,  8, 14}
-};
-
 SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
     // zero the state
     _spongeCapacity = _digestSize << 4;
@@ -188,35 +180,35 @@ void SHA3::_performRounds( int rounds ){
         _state[4][4] ^= d[4];
 
         // Rho and Pi steps
-        b[0][0] = ROT_L( _state[0][0], rotationOffsets[0][0] ); // TODO: hardcode rotation offsets
-        b[1][3] = ROT_L( _state[1][0], rotationOffsets[0][1] );
-        b[2][1] = ROT_L( _state[2][0], rotationOffsets[0][2] );
-        b[3][4] = ROT_L( _state[3][0], rotationOffsets[0][3] );
-        b[4][2] = ROT_L( _state[4][0], rotationOffsets[0][4] );
+        b[0][0] = ROT_L( _state[0][0], 0 );
+        b[1][3] = ROT_L( _state[1][0], 36 );
+        b[2][1] = ROT_L( _state[2][0], 3 );
+        b[3][4] = ROT_L( _state[3][0], 41 );
+        b[4][2] = ROT_L( _state[4][0], 18 );
 
-        b[0][2] = ROT_L( _state[0][1], rotationOffsets[1][0] );
-        b[1][0] = ROT_L( _state[1][1], rotationOffsets[1][1] );
-        b[2][3] = ROT_L( _state[2][1], rotationOffsets[1][2] );
-        b[3][1] = ROT_L( _state[3][1], rotationOffsets[1][3] );
-        b[4][4] = ROT_L( _state[4][1], rotationOffsets[1][4] );
+        b[0][2] = ROT_L( _state[0][1], 1 );
+        b[1][0] = ROT_L( _state[1][1], 44 );
+        b[2][3] = ROT_L( _state[2][1], 10 );
+        b[3][1] = ROT_L( _state[3][1], 45 );
+        b[4][4] = ROT_L( _state[4][1], 2 );
 
-        b[0][4] = ROT_L( _state[0][2], rotationOffsets[2][0] );
-        b[1][2] = ROT_L( _state[1][2], rotationOffsets[2][1] );
-        b[2][0] = ROT_L( _state[2][2], rotationOffsets[2][2] );
-        b[3][3] = ROT_L( _state[3][2], rotationOffsets[2][3] );
-        b[4][1] = ROT_L( _state[4][2], rotationOffsets[2][4] );
+        b[0][4] = ROT_L( _state[0][2], 62 );
+        b[1][2] = ROT_L( _state[1][2], 6 );
+        b[2][0] = ROT_L( _state[2][2], 43 );
+        b[3][3] = ROT_L( _state[3][2], 15 );
+        b[4][1] = ROT_L( _state[4][2], 61 );
 
-        b[0][1] = ROT_L( _state[0][3], rotationOffsets[3][0] );
-        b[1][4] = ROT_L( _state[1][3], rotationOffsets[3][1] );
-        b[2][2] = ROT_L( _state[2][3], rotationOffsets[3][2] );
-        b[3][0] = ROT_L( _state[3][3], rotationOffsets[3][3] );
-        b[4][3] = ROT_L( _state[4][3], rotationOffsets[3][4] );
+        b[0][1] = ROT_L( _state[0][3], 28 );
+        b[1][4] = ROT_L( _state[1][3], 55 );
+        b[2][2] = ROT_L( _state[2][3], 25 );
+        b[3][0] = ROT_L( _state[3][3], 21 );
+        b[4][3] = ROT_L( _state[4][3], 56 );
 
-        b[0][3] = ROT_L( _state[0][4], rotationOffsets[4][0] );
-        b[1][1] = ROT_L( _state[1][4], rotationOffsets[4][1] );
-        b[2][4] = ROT_L( _state[2][4], rotationOffsets[4][2] );
-        b[3][2] = ROT_L( _state[3][4], rotationOffsets[4][3] );
-        b[4][0] = ROT_L( _state[4][4], rotationOffsets[4][4] );
+        b[0][3] = ROT_L( _state[0][4], 27 );
+        b[1][1] = ROT_L( _state[1][4], 20 );
+        b[2][4] = ROT_L( _state[2][4], 39 );
+        b[3][2] = ROT_L( _state[3][4], 8 );
+        b[4][0] = ROT_L( _state[4][4], 14 );
 
         // Chi step
         _state[0][0] = b[0][0] ^ ((~b[1][0]) & b[2][0]);
