@@ -1,0 +1,52 @@
+$ sample LongTest 60 -wait
+Waiting for 'LongTest' to appear...  LongTest appeared.
+Sampling process 20395 for 60 seconds with 1 millisecond of run time between samples
+Sampling completed, processing symbols...
+Sample analysis of process 20395 written to file /tmp/LongTest_2013-02-04_105350_G6HW.sample.txt
+
+Analysis of sampling LongTest (pid 20395) every 1 millisecond
+Process:         LongTest [20395]
+Path:            /Users/mkitson/Documents/dev/Crypto/Bletchley/LongTest
+Load Address:    0x102f49000
+Identifier:      LongTest
+Version:         ??? (???)
+Code Type:       X86-64 (Native)
+Parent Process:  bash [10381]
+
+Date/Time:       2013-02-04 10:53:50.059 -0500
+OS Version:      Mac OS X 10.8.2 (12C60)
+Report Version:  7
+
+Call graph:
+    53851 Thread_10081076   DispatchQueue_1: com.apple.main-thread  (serial)
+      53851 start  (in libdyld.dylib) + 1  [0x7fff908c27e1]
+        49941 main  (in LongTest) + 419  [0x102f4a3f3]
+        + 48472 SHA3::hash(int)  (in LongTest) + 158  [0x102f4ae1a]
+        + ! 48224 SHA3::_absorbBuffer()  (in LongTest) + 219  [0x102f4ad75]
+        + ! : 48224 SHA3::_performRounds(int)  (in LongTest) + 498,1048,...  [0x102f4a952,0x102f4ab78,...]
+        + ! 248 SHA3::_absorbBuffer()  (in LongTest) + 132,69,...  [0x102f4ad1e,0x102f4acdf,...]
+        + 1469 SHA3::hash(int)  (in LongTest) + 77,31,...  [0x102f4adc9,0x102f4ad9b,...]
+        3176 main  (in LongTest) + 474  [0x102f4a42a]
+        + 3076 SHA3::digest(unsigned char*)  (in LongTest) + 253  [0x102f4b1d7]
+        + ! 3057 SHA3::_absorbBuffer()  (in LongTest) + 219  [0x102f4ad75]
+        + ! : 3057 SHA3::_performRounds(int)  (in LongTest) + 1130,820,...  [0x102f4abca,0x102f4aa94,...]
+        + ! 19 SHA3::_absorbBuffer()  (in LongTest) + 69,147,...  [0x102f4acdf,0x102f4ad2d,...]
+        + 69 SHA3::digest(unsigned char*)  (in LongTest) + 127,92,...  [0x102f4b159,0x102f4b136,...]
+        + 26 SHA3::digest(unsigned char*)  (in LongTest) + 311  [0x102f4b211]
+        + ! 26 SHA3::_reset()  (in LongTest) + 80,92,...  [0x102f4a726,0x102f4a732,...]
+        + 4 SHA3::digest(unsigned char*)  (in LongTest) + 299  [0x102f4b205]
+        + ! 4 memmove$VARIANT$sse42  (in libsystem_c.dylib) + 47,39,...  [0x7fff8b2519f7,0x7fff8b2519ef,...]
+        + 1 SHA3::digest(unsigned char*)  (in LongTest) + 268  [0x102f4b1e6]
+        +   1 SHA3::digestSize()  (in LongTest) + 8  [0x102f4a578]
+        734 main  (in LongTest) + 412,378,...  [0x102f4a3ec,0x102f4a3ca,...]
+
+Total number in stack (recursive counted multiple, when >=5):
+
+Sort by top of stack, same collapsed (when >= 5):
+        SHA3::_performRounds(int)  (in LongTest)        51281
+        SHA3::hash(int)  (in LongTest)        1469
+        main  (in LongTest)        734
+        SHA3::_absorbBuffer()  (in LongTest)        267
+        SHA3::digest(unsigned char*)  (in LongTest)        69
+        SHA3::_reset()  (in LongTest)        26
+
