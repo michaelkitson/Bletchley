@@ -8,6 +8,9 @@ all: TestSHA3 HashSHA3 HashZeroBytes LongTest
 debug: override CPPFLAGS += -ggdb
 debug: all
 
+o3: override CPPFLAGS += -O3
+o3: all
+
 TestSHA3: TestSHA3.o SHA3.o
 HashSHA3: HashSHA3.o SHA3.o
 HashZeroBytes: HashZeroBytes.o SHA3.o
