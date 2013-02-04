@@ -1,6 +1,7 @@
 CPPFLAGS = -Wall
 LDFLAGS = -lstdc++
 CXX = g++
+CC = g++
 
 all: TestSHA3 HashSHA3 HashZeroBytes LongTest
 
