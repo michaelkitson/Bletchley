@@ -153,17 +153,44 @@ void SHA3::_performRounds( int rounds ){
 
     for( int i = 0; i < rounds; i++ ){
         // Theta step
-        for( int x = 0; x < 5; x++ ){
-            c[x] = _state[0][x] ^ _state[1][x] ^ _state[2][x] ^ _state[3][x] ^ _state[4][x];
-        }
-        for( int x = 0; x < 5; x++ ){
-            d[x] = c[(x+4) % 5] ^ ROT_L( c[(x+1) % 5], 1);
-        }
-        for( int x = 0; x < 5; x++ ){
-            for( int y = 0; y < 5; y++ ){
-                _state[x][y] ^= d[y];
-            }
-        }
+        c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
+        c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1];
+        c[2] = _state[0][2] ^ _state[1][2] ^ _state[2][2] ^ _state[3][2] ^ _state[4][2];
+        c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3];
+        c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4];
+
+        d[0] = c[4] ^ ROT_L( c[1], 1);
+        d[1] = c[0] ^ ROT_L( c[2], 1);
+        d[2] = c[1] ^ ROT_L( c[3], 1);
+        d[3] = c[2] ^ ROT_L( c[4], 1);
+        d[4] = c[3] ^ ROT_L( c[0], 1);
+
+        _state[0][0] ^= d[0];
+        _state[0][1] ^= d[1];
+        _state[0][2] ^= d[2];
+        _state[0][3] ^= d[3];
+        _state[0][4] ^= d[4];
+        _state[1][0] ^= d[0];
+        _state[1][1] ^= d[1];
+        _state[1][2] ^= d[2];
+        _state[1][3] ^= d[3];
+        _state[1][4] ^= d[4];
+        _state[2][0] ^= d[0];
+        _state[2][1] ^= d[1];
+        _state[2][2] ^= d[2];
+        _state[2][3] ^= d[3];
+        _state[2][4] ^= d[4];
+        _state[3][0] ^= d[0];
+        _state[3][1] ^= d[1];
+        _state[3][2] ^= d[2];
+        _state[3][3] ^= d[3];
+        _state[3][4] ^= d[4];
+        _state[4][0] ^= d[0];
+        _state[4][1] ^= d[1];
+        _state[4][2] ^= d[2];
+        _state[4][3] ^= d[3];
+        _state[4][4] ^= d[4];
+
         // Rho and Pi steps
         for( int x = 0; x < 5; x++ ){
             for( int y = 0; y < 5; y++ ){
