@@ -46,7 +46,7 @@ int rotationOffsets[5][5] = {
 
 SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
     // zero the state
-    _spongeCapacity = 2 * 8 * _digestSize;
+    _spongeCapacity = _digestSize << 4;
     _spongeRate = 1600 - _spongeCapacity;
     _messageBuffer = new unsigned char[_spongeRate];
     _reset();
@@ -63,7 +63,7 @@ int SHA3::digestSize(){
 void SHA3::hash( const int b ){
     _bufferLocation[0] = (unsigned char)b;
     _bufferLocation++;
-    if( _bufferLocation == &_messageBuffer[_spongeRate/8] ){
+    if( _bufferLocation == &_messageBuffer[_spongeRate>>3] ){
         _bufferLocation = _messageBuffer;
         _absorbBuffer();
     }
@@ -101,11 +101,11 @@ void SHA3::digest( unsigned char d[] ){
     // Pad with 10*1 padding
     _bufferLocation[0] = 1;
     _bufferLocation++;
-    while( _bufferLocation != &_messageBuffer[_spongeRate/8] ){
+    while( _bufferLocation != &_messageBuffer[_spongeRate>>3] ){
         _bufferLocation[0] = 0;
         _bufferLocation++;
     }
-    _messageBuffer[_spongeRate/8 - 1] |= 0x80;
+    _messageBuffer[(_spongeRate >> 3) - 1] |= 0x80;
     _absorbBuffer();
 
     // Squeeze
@@ -115,13 +115,13 @@ void SHA3::digest( unsigned char d[] ){
 
 char *SHA3::digestInHex(){
     unsigned char *bytes = new unsigned char[ digestSize() ];
-    char *hex = new char[ 2 * digestSize() + 1 ];
-    hex[2*digestSize()] = '\0';
+    char *hex = new char[ (digestSize() << 1) + 1 ];
+    hex[digestSize() << 1] = '\0';
     digest( bytes );
 
     for( int byte = 0; byte < digestSize(); byte++ ){
-        hex[2*byte]   = hexLookup[bytes[byte] >> 4];
-        hex[2*byte+1] = hexLookup[bytes[byte] & 15];
+        hex[byte << 1]   = hexLookup[bytes[byte] >> 4];
+        hex[(byte << 1)+1] = hexLookup[bytes[byte] & 15];
     }
     delete( bytes );
     return hex;
@@ -132,7 +132,7 @@ char *SHA3::digestInHex(){
 void SHA3::_reset(){
     for( int x = 0; x < 5; x++ ){
         for( int y = 0; y < 5; y++ ){
-            _state[x][y] = 0;
+            _state[x][y] = 0;  // TODO: unroll
         }
     }
     _bufferLocation = _messageBuffer;
@@ -141,7 +141,7 @@ void SHA3::_reset(){
 void SHA3::_absorbBuffer(){
     keccakLane_t *x = (keccakLane_t *)_messageBuffer;
     for( int i = 0; i*64 < _spongeRate; i++ ){
-        _state[i/5][i%5] |= x[i];
+        _state[i/5][i%5] |= x[i]; // TODO: unroll
     }
     _performRounds( ROUNDS );
 }
@@ -192,7 +192,7 @@ void SHA3::_performRounds( int rounds ){
         _state[4][4] ^= d[4];
 
         // Rho and Pi steps
-        b[0][0] = ROT_L( _state[0][0], rotationOffsets[0][0] );
+        b[0][0] = ROT_L( _state[0][0], rotationOffsets[0][0] ); // TODO: hardcode rotation offsets
         b[1][3] = ROT_L( _state[1][0], rotationOffsets[0][1] );
         b[2][1] = ROT_L( _state[2][0], rotationOffsets[0][2] );
         b[3][4] = ROT_L( _state[3][0], rotationOffsets[0][3] );
