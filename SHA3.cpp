@@ -147,6 +147,7 @@ void SHA3::_absorbBuffer(){
 }
 
 void SHA3::_performRounds_24(){
+    // This function is slower than using a loop, I'm betting it causes the code size to inflate too large to fit in the higher caches
     keccakLane_t b[5][5];
     keccakLane_t c[5];
     keccakLane_t d[5];
