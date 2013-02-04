@@ -14,6 +14,7 @@ typedef unsigned long long keccakLane_t;
 class SHA3 : public HashFunction{
  public:
     SHA3( int digestSize );
+    ~SHA3();
 
     /// Adds an entire string to the message
     ///

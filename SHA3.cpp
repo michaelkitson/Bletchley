@@ -44,6 +44,9 @@ SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
     _reset();
 }
 
+SHA3::~SHA3(){
+    delete( _messageBuffer );
+}
 ////////// Accessors //////////
 
 int SHA3::digestSize(){
