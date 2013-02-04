@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstring>
 #include <iostream>
 #include "SHA3.h"
@@ -125,7 +124,6 @@ char *SHA3::digestInHex(){
         hex[2*byte+1] = hexLookup[bytes[byte] & 15];
     }
     delete( bytes );
-    assert( hex[2*digestSize()] == '\0' );
     return hex;
 }
 
@@ -202,4 +200,3 @@ void SHA3::_printSponge(){
     }
     std::cout << std::dec << "]" << std::endl;
 }
-
