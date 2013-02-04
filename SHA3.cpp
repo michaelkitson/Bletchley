@@ -130,11 +130,7 @@ char *SHA3::digestInHex(){
 ////////// Internals //////////
 
 void SHA3::_reset(){
-    for( int x = 0; x < 5; x++ ){
-        for( int y = 0; y < 5; y++ ){
-            _state[x][y] = 0;  // TODO: unroll
-        }
-    }
+    bzero( _state, 200 ); //25 64-byte lanes
     _bufferLocation = _messageBuffer;
 }
 
