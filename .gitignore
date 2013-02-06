@@ -3,3 +3,4 @@ HashSHA3
 TestSHA3
 HashZeroBytes
 LongTest
+sha3sum
