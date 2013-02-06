@@ -13,7 +13,7 @@ int main( int argc, char* argv[] ){
                   << " achieve a 100 second runtime" << std::endl;
         return 1;
     }
-    int iterations = atoi( argv[1] );
+    long long iterations = atoll( argv[1] );
 
     unsigned char buffer[DIGEST_BYTES];
     for( int i = 0; i < DIGEST_BYTES; i++ ){
@@ -21,7 +21,7 @@ int main( int argc, char* argv[] ){
     }
     
     HashFunction *sha3 = new SHA3( DIGEST_BYTES );
-    for( int i = 0; i < iterations; i++ ){
+    for( long long i = 0; i < iterations; i++ ){
         // Messages 16 times the digest size (8KB)
         for( int b = 0; b < (DIGEST_BYTES << 4); b++ ){
             sha3->hash( buffer[b % DIGEST_BYTES] );
