@@ -5,7 +5,7 @@
 #include "SHA3.h"
 
 #define DEFAULT_DIGEST_BITS 256
-#define FILE_BUFFER_BYTES 512
+#define FILE_BUFFER_BYTES 4096
 
 void usage(){
     std::cout << "Usage: sha3sum [-a <digestSize>] <file>" << std::endl 
@@ -22,7 +22,6 @@ char *hexDigestForFile( const char *filename, const int digestBytes ){
 
     file.open( filename, std::ifstream::in );
     if( !file.is_open() ){
-        std::cout << "Couldn't open file: " << filename << std::endl;
         return 0;
     }
     while( file.good() && amountRead > 0 ){
@@ -70,6 +69,9 @@ int main( int argc, char *argv[] ){
     char *hexDigest = hexDigestForFile( filename, digestSize/8 );
     if( hexDigest != 0 ){
         std::cout << hexDigest << "\t" << filename << std::endl;
+    }
+    else{
+        std::cout << "Couldn't open file: " << filename << std::endl;
     }
     delete( hexDigest );
     return 0;
