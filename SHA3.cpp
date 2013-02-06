@@ -180,7 +180,7 @@ inline void SHA3::_performRounds( int rounds ){
         _state[4][4] ^= d[4];
 
         // Rho and Pi steps
-        b[0][0] = ROT_L( _state[0][0], 0 );
+        b[0][0] = _state[0][0]; // rotate left by 0 bits
         b[1][3] = ROT_L( _state[1][0], 36 );
         b[2][1] = ROT_L( _state[2][0], 3 );
         b[3][4] = ROT_L( _state[3][0], 41 );
