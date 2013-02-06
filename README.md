@@ -8,13 +8,17 @@ Specifically, this is a 64-bit implementation of Keccak-1600. It does not suppor
 * Michael Kitson
 
 ## Usage
+Hashing a string:
 ```sh
 $ ./HashSHA3 512 'The quick brown fox jumps over the lazy dog'
 Performing SHA3-512 on: 'The quick brown fox jumps over the lazy dog'
 d135bb84d0439dbac432247ee573a23ea7d3c9deb2a968eb31d47c4fb45f1ef4422d6c531b5b9bd6f449ebcc449ea94d0a8f05f62130fda612da53c79659f609
 ```
-[Output Verification](https://en.wikipedia.org/wiki/Sha3#Examples_of_SHA-3_.28Keccak.29_variants)
-
+Hashing a file:
+```sh
+$ ./sha3sum -a 256 sha3sum.cpp 
+e0a876dbcaac7d97a83e95e40cfd901b09afbc868834ca2793b7835e09bc371d  sha3sum.cpp
+```
 ## Timing Functions
 ### Timing on an i7-2677M
 Example timed hashing 100 MiB of zeros
