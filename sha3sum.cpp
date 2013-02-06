@@ -1,6 +1,7 @@
 #include <cstdlib>
-#include <iostream>
+#include <cstring>
 #include <fstream>
+#include <iostream>
 #include "HashFunction.h"
 #include "SHA3.h"
 
