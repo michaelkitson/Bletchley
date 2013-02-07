@@ -121,7 +121,7 @@ char *SHA3::digestInHex(){
         hex[byte << 1]   = hexLookup[bytes[byte] >> 4];
         hex[(byte << 1)+1] = hexLookup[bytes[byte] & 15];
     }
-    delete( bytes );
+    delete[] bytes;
     return hex;
 }
 
