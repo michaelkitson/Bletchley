@@ -47,7 +47,7 @@ SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
 
 SHA3::~SHA3(){
     // CHANGE: Deconstructor included
-    delete( _messageBuffer );
+    delete[] _messageBuffer;
 }
 ////////// Accessors //////////
 
