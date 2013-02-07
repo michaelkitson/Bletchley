@@ -38,6 +38,7 @@ const keccakLane_t roundConstants[] = {
 
 SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
     // zero the state
+    // CHANGE: Now uses bit shifting instead of multiplication
     _spongeCapacity = _digestSize << 4;
     _spongeRate = 1600 - _spongeCapacity;
     _messageBuffer = new unsigned char[_spongeRate];
@@ -45,6 +46,7 @@ SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
 }
 
 SHA3::~SHA3(){
+    // CHANGE: Deconstructor included
     delete( _messageBuffer );
 }
 ////////// Accessors //////////
@@ -96,6 +98,7 @@ void SHA3::digest( unsigned char d[] ){
     // Pad with 10*1 padding
     _bufferLocation[0] = 1;
     _bufferLocation++;
+    // CHANGE: Uses system bzero function instead of while loop to initilize
     bzero( _bufferLocation, &_messageBuffer[_spongeRate>>3] - _bufferLocation );
     _messageBuffer[(_spongeRate >> 3) - 1] |= 0x80;
     _absorbBuffer();
@@ -108,10 +111,13 @@ void SHA3::digest( unsigned char d[] ){
 char *SHA3::digestInHex(){
     unsigned char *bytes = new unsigned char[ digestSize() ];
     char *hex = new char[ (digestSize() << 1) + 1 ];
+
+    // CHANGE: Uses bitshifting instead of multiplication
     hex[digestSize() << 1] = '\0';
     digest( bytes );
 
     for( int byte = 0; byte < digestSize(); byte++ ){
+        // CHANGE: Uses bitshifting instead of multiplication
         hex[byte << 1]   = hexLookup[bytes[byte] >> 4];
         hex[(byte << 1)+1] = hexLookup[bytes[byte] & 15];
     }
@@ -122,6 +128,7 @@ char *SHA3::digestInHex(){
 ////////// Internals //////////
 
 inline void SHA3::_reset(){
+    // CHANGE: Uses system bzero function instead of while loop to initilize
     bzero( _state, 200 ); //25 64-byte lanes
     _bufferLocation = _messageBuffer;
 }
@@ -134,12 +141,16 @@ void SHA3::_absorbBuffer(){
     _performRounds( ROUNDS );
 }
 
+// CHANGE: Function changed to inline
 inline void SHA3::_performRounds( int rounds ){
     keccakLane_t b[5][5];
     keccakLane_t c[5];
     keccakLane_t d[5];
 
     for( int i = 0; i < rounds; i++ ){
+
+        //CHANGE: For loops change to pre-determined steps, reduces call stack
+
         // Theta step
         c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
         c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1];
