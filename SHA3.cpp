@@ -47,7 +47,7 @@ SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
 
 SHA3::~SHA3(){
     // CHANGE: Deconstructor included
-    delete( _messageBuffer );
+    delete[] _messageBuffer;
 }
 ////////// Accessors //////////
 
@@ -121,7 +121,7 @@ char *SHA3::digestInHex(){
         hex[byte << 1]   = hexLookup[bytes[byte] >> 4];
         hex[(byte << 1)+1] = hexLookup[bytes[byte] & 15];
     }
-    delete( bytes );
+    delete[] bytes;
     return hex;
 }
 
