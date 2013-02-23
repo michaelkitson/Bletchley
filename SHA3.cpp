@@ -136,14 +136,14 @@ inline void SHA3::_reset(){
 void SHA3::_absorbBuffer(){
     keccakLane_t *x = (keccakLane_t *)_messageBuffer;
     for( int i = 0; i*64 < _spongeRate; i++ ){
-        _state[i/5][i%5] |= x[i]; // TODO: unroll
+        _state[i] |= x[i]; // TODO: unroll
     }
     _performRounds( ROUNDS );
 }
 
 // CHANGE: Function changed to inline
 inline void SHA3::_performRounds( int rounds ){
-    keccakLane_t b[5][5];
+    keccakLane_t b[25];
     keccakLane_t c[5];
     keccakLane_t d[5];
 
@@ -152,11 +152,11 @@ inline void SHA3::_performRounds( int rounds ){
         //CHANGE: For loops change to pre-determined steps, reduces call stack
 
         // Theta step
-        c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
-        c[1] = _state[0][1] ^ _state[1][1] ^ _state[2][1] ^ _state[3][1] ^ _state[4][1];
-        c[2] = _state[0][2] ^ _state[1][2] ^ _state[2][2] ^ _state[3][2] ^ _state[4][2];
-        c[3] = _state[0][3] ^ _state[1][3] ^ _state[2][3] ^ _state[3][3] ^ _state[4][3];
-        c[4] = _state[0][4] ^ _state[1][4] ^ _state[2][4] ^ _state[3][4] ^ _state[4][4];
+        c[0] = _state[0] ^ _state[5] ^ _state[10] ^ _state[15] ^ _state[20];
+        c[1] = _state[1] ^ _state[6] ^ _state[11] ^ _state[16] ^ _state[21];
+        c[2] = _state[2] ^ _state[7] ^ _state[12] ^ _state[17] ^ _state[22];
+        c[3] = _state[3] ^ _state[8] ^ _state[13] ^ _state[18] ^ _state[23];
+        c[4] = _state[4] ^ _state[9] ^ _state[14] ^ _state[19] ^ _state[24];
 
         d[0] = c[4] ^ ROT_L( c[1], 1 );
         d[1] = c[0] ^ ROT_L( c[2], 1 );
@@ -164,96 +164,96 @@ inline void SHA3::_performRounds( int rounds ){
         d[3] = c[2] ^ ROT_L( c[4], 1 );
         d[4] = c[3] ^ ROT_L( c[0], 1 );
 
-        _state[0][0] ^= d[0];
-        _state[0][1] ^= d[1];
-        _state[0][2] ^= d[2];
-        _state[0][3] ^= d[3];
-        _state[0][4] ^= d[4];
-        _state[1][0] ^= d[0];
-        _state[1][1] ^= d[1];
-        _state[1][2] ^= d[2];
-        _state[1][3] ^= d[3];
-        _state[1][4] ^= d[4];
-        _state[2][0] ^= d[0];
-        _state[2][1] ^= d[1];
-        _state[2][2] ^= d[2];
-        _state[2][3] ^= d[3];
-        _state[2][4] ^= d[4];
-        _state[3][0] ^= d[0];
-        _state[3][1] ^= d[1];
-        _state[3][2] ^= d[2];
-        _state[3][3] ^= d[3];
-        _state[3][4] ^= d[4];
-        _state[4][0] ^= d[0];
-        _state[4][1] ^= d[1];
-        _state[4][2] ^= d[2];
-        _state[4][3] ^= d[3];
-        _state[4][4] ^= d[4];
+        _state[0] ^= d[0];
+        _state[1] ^= d[1];
+        _state[2] ^= d[2];
+        _state[3] ^= d[3];
+        _state[4] ^= d[4];
+        _state[5] ^= d[0];
+        _state[6] ^= d[1];
+        _state[7] ^= d[2];
+        _state[8] ^= d[3];
+        _state[9] ^= d[4];
+        _state[10] ^= d[0];
+        _state[11] ^= d[1];
+        _state[12] ^= d[2];
+        _state[13] ^= d[3];
+        _state[14] ^= d[4];
+        _state[15] ^= d[0];
+        _state[16] ^= d[1];
+        _state[17] ^= d[2];
+        _state[18] ^= d[3];
+        _state[19] ^= d[4];
+        _state[20] ^= d[0];
+        _state[21] ^= d[1];
+        _state[22] ^= d[2];
+        _state[23] ^= d[3];
+        _state[24] ^= d[4];
 
         // Rho and Pi steps
-        b[0][0] = _state[0][0]; // rotate left by 0 bits
-        b[1][3] = ROT_L( _state[1][0], 36 );
-        b[2][1] = ROT_L( _state[2][0], 3 );
-        b[3][4] = ROT_L( _state[3][0], 41 );
-        b[4][2] = ROT_L( _state[4][0], 18 );
+        b[0] = _state[0]; // rotate left by 0 bits
+        b[8] = ROT_L( _state[5], 36 );
+        b[11] = ROT_L( _state[10], 3 );
+        b[19] = ROT_L( _state[15], 41 );
+        b[22] = ROT_L( _state[20], 18 );
 
-        b[0][2] = ROT_L( _state[0][1], 1 );
-        b[1][0] = ROT_L( _state[1][1], 44 );
-        b[2][3] = ROT_L( _state[2][1], 10 );
-        b[3][1] = ROT_L( _state[3][1], 45 );
-        b[4][4] = ROT_L( _state[4][1], 2 );
+        b[2] = ROT_L( _state[1], 1 );
+        b[5] = ROT_L( _state[6], 44 );
+        b[13] = ROT_L( _state[11], 10 );
+        b[16] = ROT_L( _state[16], 45 );
+        b[24] = ROT_L( _state[21], 2 );
 
-        b[0][4] = ROT_L( _state[0][2], 62 );
-        b[1][2] = ROT_L( _state[1][2], 6 );
-        b[2][0] = ROT_L( _state[2][2], 43 );
-        b[3][3] = ROT_L( _state[3][2], 15 );
-        b[4][1] = ROT_L( _state[4][2], 61 );
+        b[4] = ROT_L( _state[2], 62 );
+        b[7] = ROT_L( _state[7], 6 );
+        b[10] = ROT_L( _state[12], 43 );
+        b[18] = ROT_L( _state[17], 15 );
+        b[21] = ROT_L( _state[22], 61 );
 
-        b[0][1] = ROT_L( _state[0][3], 28 );
-        b[1][4] = ROT_L( _state[1][3], 55 );
-        b[2][2] = ROT_L( _state[2][3], 25 );
-        b[3][0] = ROT_L( _state[3][3], 21 );
-        b[4][3] = ROT_L( _state[4][3], 56 );
+        b[1] = ROT_L( _state[3], 28 );
+        b[9] = ROT_L( _state[8], 55 );
+        b[12] = ROT_L( _state[13], 25 );
+        b[15] = ROT_L( _state[18], 21 );
+        b[23] = ROT_L( _state[23], 56 );
 
-        b[0][3] = ROT_L( _state[0][4], 27 );
-        b[1][1] = ROT_L( _state[1][4], 20 );
-        b[2][4] = ROT_L( _state[2][4], 39 );
-        b[3][2] = ROT_L( _state[3][4], 8 );
-        b[4][0] = ROT_L( _state[4][4], 14 );
+        b[3] = ROT_L( _state[4], 27 );
+        b[6] = ROT_L( _state[9], 20 );
+        b[14] = ROT_L( _state[14], 39 );
+        b[17] = ROT_L( _state[19], 8 );
+        b[20] = ROT_L( _state[24], 14 );
 
         // Chi step
-        _state[0][0] = b[0][0] ^ ((~b[1][0]) & b[2][0]);
-        _state[1][0] = b[0][1] ^ ((~b[1][1]) & b[2][1]);
-        _state[2][0] = b[0][2] ^ ((~b[1][2]) & b[2][2]);
-        _state[3][0] = b[0][3] ^ ((~b[1][3]) & b[2][3]);
-        _state[4][0] = b[0][4] ^ ((~b[1][4]) & b[2][4]);
+        _state[0] = b[0] ^ ((~b[5]) & b[10]);
+        _state[5] = b[1] ^ ((~b[6]) & b[11]);
+        _state[10] = b[2] ^ ((~b[7]) & b[12]);
+        _state[15] = b[3] ^ ((~b[8]) & b[13]);
+        _state[20] = b[4] ^ ((~b[9]) & b[14]);
 
-        _state[0][1] = b[1][0] ^ ((~b[2][0]) & b[3][0]);
-        _state[1][1] = b[1][1] ^ ((~b[2][1]) & b[3][1]);
-        _state[2][1] = b[1][2] ^ ((~b[2][2]) & b[3][2]);
-        _state[3][1] = b[1][3] ^ ((~b[2][3]) & b[3][3]);
-        _state[4][1] = b[1][4] ^ ((~b[2][4]) & b[3][4]);
+        _state[1] = b[5] ^ ((~b[10]) & b[15]);
+        _state[6] = b[6] ^ ((~b[11]) & b[16]);
+        _state[11] = b[7] ^ ((~b[12]) & b[17]);
+        _state[16] = b[8] ^ ((~b[13]) & b[18]);
+        _state[21] = b[9] ^ ((~b[14]) & b[19]);
 
-        _state[0][2] = b[2][0] ^ ((~b[3][0]) & b[4][0]);
-        _state[1][2] = b[2][1] ^ ((~b[3][1]) & b[4][1]);
-        _state[2][2] = b[2][2] ^ ((~b[3][2]) & b[4][2]);
-        _state[3][2] = b[2][3] ^ ((~b[3][3]) & b[4][3]);
-        _state[4][2] = b[2][4] ^ ((~b[3][4]) & b[4][4]);
+        _state[2] = b[10] ^ ((~b[15]) & b[20]);
+        _state[7] = b[11] ^ ((~b[16]) & b[21]);
+        _state[12] = b[12] ^ ((~b[17]) & b[22]);
+        _state[17] = b[13] ^ ((~b[18]) & b[23]);
+        _state[22] = b[14] ^ ((~b[19]) & b[24]);
 
-        _state[0][3] = b[3][0] ^ ((~b[4][0]) & b[0][0]);
-        _state[1][3] = b[3][1] ^ ((~b[4][1]) & b[0][1]);
-        _state[2][3] = b[3][2] ^ ((~b[4][2]) & b[0][2]);
-        _state[3][3] = b[3][3] ^ ((~b[4][3]) & b[0][3]);
-        _state[4][3] = b[3][4] ^ ((~b[4][4]) & b[0][4]);
+        _state[3] = b[15] ^ ((~b[20]) & b[0]);
+        _state[8] = b[16] ^ ((~b[21]) & b[1]);
+        _state[13] = b[17] ^ ((~b[22]) & b[2]);
+        _state[18] = b[18] ^ ((~b[23]) & b[3]);
+        _state[23] = b[19] ^ ((~b[24]) & b[4]);
 
-        _state[0][4] = b[4][0] ^ ((~b[0][0]) & b[1][0]);
-        _state[1][4] = b[4][1] ^ ((~b[0][1]) & b[1][1]);
-        _state[2][4] = b[4][2] ^ ((~b[0][2]) & b[1][2]);
-        _state[3][4] = b[4][3] ^ ((~b[0][3]) & b[1][3]);
-        _state[4][4] = b[4][4] ^ ((~b[0][4]) & b[1][4]);
+        _state[4] = b[20] ^ ((~b[0]) & b[5]);
+        _state[9] = b[21] ^ ((~b[1]) & b[6]);
+        _state[14] = b[22] ^ ((~b[2]) & b[7]);
+        _state[19] = b[23] ^ ((~b[3]) & b[8]);
+        _state[24] = b[24] ^ ((~b[4]) & b[9]);
 
         // Iota step
-        _state[0][0] ^= roundConstants[i];
+        _state[0] ^= roundConstants[i];
     }
 }
 
