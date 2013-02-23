@@ -40,7 +40,7 @@ class SHA3 : public HashFunction{
     int _digestSize; // bytes
 
     // Round state
-    keccakLane_t _state[5][5];
+    keccakLane_t _state[25];
 
     // Digest-length specific Values
     int _spongeCapacity;
