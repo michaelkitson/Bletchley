@@ -149,7 +149,7 @@ inline void SHA3::_performRounds( int rounds ){
 
     for( int i = 0; i < rounds; i++ ){
 
-        //CHANGE: For loops change to pre-determined steps, reduces call stack
+        //CHANGE: For loops change to pre-determined steps, reduces branching
 
         // Theta step
         c[0] = _state[0][0] ^ _state[1][0] ^ _state[2][0] ^ _state[3][0] ^ _state[4][0];
