@@ -136,7 +136,7 @@ inline void SHA3::_reset(){
 void SHA3::_absorbBuffer(){
     keccakLane_t *x = (keccakLane_t *)_messageBuffer;
     for( int i = 0; i*64 < _spongeRate; i++ ){
-        _state[i/5][i%5] |= x[i]; // TODO: unroll
+        _state[i/5][i%5] ^= x[i]; // TODO: unroll
     }
     _performRounds( ROUNDS );
 }
