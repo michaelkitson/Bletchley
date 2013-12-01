@@ -8,8 +8,7 @@
 /// @author: Christopher Bentivenga
 /// @author: Frederick Christie
 /// @author: Michael Kitson
-
-typedef unsigned long long keccakLane_t;
+/// @author: Khanh Tran
 
 class SHA3
   :public HashFunction
