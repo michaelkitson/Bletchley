@@ -1,6 +1,7 @@
 #ifndef SHA3_H
 #define SHA3_H
-
+#include <cstdlib>
+#include <cstdint>
 #include "HashFunction.h"
 
 /// SHA-3 winning hash algorithm Keccak
