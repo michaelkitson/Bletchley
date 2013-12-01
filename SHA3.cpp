@@ -1,278 +1,194 @@
 #include <cstring>
-#include <iostream>
 #include "SHA3.h"
 
 // Circular rotate left
 #define ROT_L( X, Y ) (( X << Y ) | ( X >> (64 - Y) ))
-#define ROUNDS 24
 
-/// For converting binary output to hexidecimal for printing
-const char *hexLookup = "0123456789abcdef";
-
-const keccakLane_t roundConstants[] = {
-    0x0000000000000001,
-    0x0000000000008082,
-    0x800000000000808A,
-    0x8000000080008000,
-    0x000000000000808B,
-    0x0000000080000001,
-    0x8000000080008081,
-    0x8000000000008009,
-    0x000000000000008A,
-    0x0000000000000088,
-    0x0000000080008009,
-    0x000000008000000A,
-    0x000000008000808B,
-    0x800000000000008B,
-    0x8000000000008089,
-    0x8000000000008003,
-    0x8000000000008002,
-    0x8000000000000080,
-    0x000000000000800A,
-    0x800000008000000A,
-    0x8000000080008081,
-    0x8000000000008080,
-    0x0000000080000001,
-    0x8000000080008008
-};
-
-SHA3::SHA3( int digestSize ) : _digestSize( digestSize ){
-    // zero the state
-    // CHANGE: Now uses bit shifting instead of multiplication
-    _spongeCapacity = _digestSize << 4;
-    _spongeRate = 1600 - _spongeCapacity;
-    _messageBuffer = new unsigned char[_spongeRate];
-    _reset();
+SHA3::SHA3(
+  int digestSize
+):index_(0)
+ ,ndigits_(digestSize)
+ ,block_size_(200 - 2 * ndigits_)
+ ,block_(new unsigned char[block_size_])
+{
+  reset();
 }
 
-SHA3::~SHA3(){
-    // CHANGE: Deconstructor included
-    delete[] _messageBuffer;
+SHA3::~SHA3(
+) {
+  delete[] block_;
 }
 ////////// Accessors //////////
 
-int SHA3::digestSize(){
-    return _digestSize;
+int SHA3::digestSize(
+) {
+  return (ndigits_);
 }
 
 ////////// Ingesting Data //////////
 
-void SHA3::hash( const int b ){
-    _bufferLocation[0] = (unsigned char)b;
-    _bufferLocation++;
-    if( _bufferLocation == &_messageBuffer[_spongeRate>>3] ){
-        _bufferLocation = _messageBuffer;
-        _absorbBuffer();
-    }
+void SHA3::hash(
+  byte_type const b
+) {
+  block_[index_++] = b;
+  if (index_ == block_size_) {
+    transform();
+    index_ = 0;
+  }
 }
 
-void SHA3::hashString( const char *str ){
-    int byte = 0;
-    while( str[byte] != '\0' ){
-        hash( (int)( (unsigned char) str[byte] ) );
-        byte++;
-    }
+void SHA3::hashString(
+  char const* _str
+) {
+  while (*_str != '\0') {
+    hash((unsigned char)*_str);
+    ++_str;
+  }
 }
 
-void SHA3::hashHexString( const char *str ){
-    int byte = 0;
-    while( str[byte] != '\0' ){
-        int f = str[byte];
-        int s = str[byte+1];
-        if( f >= 97 ) f -= 87; // lowercase
-        else if( f >= 65 ) f -= 55; // uppercase
-        else f -= 48; // numeric
+static inline
+unsigned char to_hex(
+  char _chr
+) {
+  if (_chr >= 97)
+    _chr -= 87; // lowercase
+  else
+  if (_chr >= 65)
+    _chr -= 55; // uppercase
+  else
+    _chr -= 48; // numeric
 
-        if( s >= 97 ) s -= 87; // lowercase
-        else if( s >= 65 ) s -= 55; // uppercase
-        else s -= 48; // numeric
+  return (_chr);
+}
 
-        hash( (f << 4) | s );
-        byte+=2;
-    }
+void SHA3::hashHexString(
+  char const* str
+) {
+  while (*str != '\0') {
+    unsigned char hi = to_hex(*str++);
+    unsigned char lo = to_hex(*str++);
+    hash((hi << 4) | lo);
+  }
 }
 
 ////////// Expelling Data //////////
 
-void SHA3::digest( unsigned char d[] ){
-    // Pad with 10*1 padding
-    _bufferLocation[0] = 1;
-    _bufferLocation++;
-    // CHANGE: Uses system bzero function instead of while loop to initilize
-    bzero( _bufferLocation, &_messageBuffer[_spongeRate>>3] - _bufferLocation );
-    _messageBuffer[(_spongeRate >> 3) - 1] |= 0x80;
-    _absorbBuffer();
+void SHA3::digest(
+  byte_type d[]
+) {
+  // Pad with 10*1 padding
+  block_[index_++] = 1;
 
-    // Squeeze
-    memcpy( d, _state, digestSize() );
-    _reset(); // Ready the function to hash another message
+  while (index_ != block_size_)
+    block_[index_++] = 0;
+
+  block_[block_size_ - 1] |= 0x80;
+  transform();
+
+  // Squeeze
+  ::std::memcpy(d, state_, ndigits_);
+  reset(); // Ready the function to hash another message
 }
 
-char *SHA3::digestInHex(){
-    unsigned char *bytes = new unsigned char[ digestSize() ];
-    char *hex = new char[ (digestSize() << 1) + 1 ];
+char *SHA3::digestInHex(
+) {
+  char const* hexLookup = "0123456789abcdef";
 
-    // CHANGE: Uses bitshifting instead of multiplication
-    hex[digestSize() << 1] = '\0';
-    digest( bytes );
+  byte_type* bytes = new byte_type[ndigits_];
+  char* hex = new char[ndigits_ * 2 + 1];
 
-    for( int byte = 0; byte < digestSize(); byte++ ){
-        // CHANGE: Uses bitshifting instead of multiplication
-        hex[byte << 1]   = hexLookup[bytes[byte] >> 4];
-        hex[(byte << 1)+1] = hexLookup[bytes[byte] & 15];
-    }
-    delete[] bytes;
-    return hex;
+  digest(bytes);
+
+  for (::std::size_t byte = 0; byte < ndigits_; ++byte) {
+    hex[ byte << 1     ] = hexLookup[bytes[byte] >> 4];
+    hex[(byte << 1) + 1] = hexLookup[bytes[byte] & 15];
+  }
+  hex[ndigits_ * 2] = '\0';
+  delete[] bytes;
+
+  return (hex);
 }
 
 ////////// Internals //////////
 
-inline void SHA3::_reset(){
-    // CHANGE: Uses system bzero function instead of while loop to initilize
-    bzero( _state, 200 ); //25 64-byte lanes
-    _bufferLocation = _messageBuffer;
+inline
+void SHA3::reset(
+) {
+  std::memset(state_, 0, 200); //25 64-byte lanes
+  index_ = 0;
 }
 
-void SHA3::_absorbBuffer(){
-    keccakLane_t *x = (keccakLane_t *)_messageBuffer;
-    for( int i = 0; i*64 < _spongeRate; i++ ){
-        _state[i] |= x[i]; // TODO: unroll
-    }
-    _performRounds( ROUNDS );
-}
+void SHA3::transform(
+) {
+  static word_type const sc_round_constants_[] =
+  {
+    0x0000000000000001, 0x0000000000008082, 0x800000000000808a,
+    0x8000000080008000, 0x000000000000808b, 0x0000000080000001,
+    0x8000000080008081, 0x8000000000008009, 0x000000000000008a,
+    0x0000000000000088, 0x0000000080008009, 0x000000008000000a,
+    0x000000008000808b, 0x800000000000008b, 0x8000000000008089,
+    0x8000000000008003, 0x8000000000008002, 0x8000000000000080,
+    0x000000000000800a, 0x800000008000000a, 0x8000000080008081,
+    0x8000000000008080, 0x0000000080000001, 0x8000000080008008
+  };
 
-// CHANGE: Function changed to inline
-inline void SHA3::_performRounds( int rounds ){
-    keccakLane_t b[25];
-    keccakLane_t c[5];
-    keccakLane_t d[5];
+  word_type b[25] = {0};
+  word_type c[ 5] = {0};
+  word_type d[ 5] = {0};
 
-    for( int i = 0; i < rounds; i++ ){
+  auto&& s = state_;
+  word_type* x = (word_type*)block_;
+  for (::std::size_t i = 0; i < (block_size_ >> 3); ++i)
+    s[i] ^= x[i];
 
-        //CHANGE: For loops change to pre-determined steps, reduces call stack
+  for (int i = 0; i < 24; ++i) {
 
-        // Theta step
-        c[0] = _state[0] ^ _state[5] ^ _state[10] ^ _state[15] ^ _state[20];
-        c[1] = _state[1] ^ _state[6] ^ _state[11] ^ _state[16] ^ _state[21];
-        c[2] = _state[2] ^ _state[7] ^ _state[12] ^ _state[17] ^ _state[22];
-        c[3] = _state[3] ^ _state[8] ^ _state[13] ^ _state[18] ^ _state[23];
-        c[4] = _state[4] ^ _state[9] ^ _state[14] ^ _state[19] ^ _state[24];
+    c[0] = s[ 0] ^ s[ 5] ^ s[10] ^ s[15] ^ s[20];
+    c[1] = s[ 1] ^ s[ 6] ^ s[11] ^ s[16] ^ s[21];
+    c[2] = s[ 2] ^ s[ 7] ^ s[12] ^ s[17] ^ s[22];
+    c[3] = s[ 3] ^ s[ 8] ^ s[13] ^ s[18] ^ s[23];
+    c[4] = s[ 4] ^ s[ 9] ^ s[14] ^ s[19] ^ s[24];
 
-        d[0] = c[4] ^ ROT_L( c[1], 1 );
-        d[1] = c[0] ^ ROT_L( c[2], 1 );
-        d[2] = c[1] ^ ROT_L( c[3], 1 );
-        d[3] = c[2] ^ ROT_L( c[4], 1 );
-        d[4] = c[3] ^ ROT_L( c[0], 1 );
+    d[0] = c[4] ^ ROT_L(c[1], 1);
+    d[1] = c[0] ^ ROT_L(c[2], 1);
+    d[2] = c[1] ^ ROT_L(c[3], 1);
+    d[3] = c[2] ^ ROT_L(c[4], 1);
+    d[4] = c[3] ^ ROT_L(c[0], 1);
 
-        _state[0] ^= d[0];
-        _state[1] ^= d[1];
-        _state[2] ^= d[2];
-        _state[3] ^= d[3];
-        _state[4] ^= d[4];
-        _state[5] ^= d[0];
-        _state[6] ^= d[1];
-        _state[7] ^= d[2];
-        _state[8] ^= d[3];
-        _state[9] ^= d[4];
-        _state[10] ^= d[0];
-        _state[11] ^= d[1];
-        _state[12] ^= d[2];
-        _state[13] ^= d[3];
-        _state[14] ^= d[4];
-        _state[15] ^= d[0];
-        _state[16] ^= d[1];
-        _state[17] ^= d[2];
-        _state[18] ^= d[3];
-        _state[19] ^= d[4];
-        _state[20] ^= d[0];
-        _state[21] ^= d[1];
-        _state[22] ^= d[2];
-        _state[23] ^= d[3];
-        _state[24] ^= d[4];
+    s[ 0] ^= d[0]; s[ 6] ^= d[1]; s[12] ^= d[2]; s[18] ^= d[3]; s[24] ^= d[4];
+    s[ 3] ^= d[3]; s[ 9] ^= d[4]; s[10] ^= d[0]; s[16] ^= d[1]; s[22] ^= d[2];
+    s[ 1] ^= d[1]; s[ 7] ^= d[2]; s[13] ^= d[3]; s[19] ^= d[4]; s[20] ^= d[0];
+    s[ 4] ^= d[4]; s[ 5] ^= d[0]; s[11] ^= d[1]; s[17] ^= d[2]; s[23] ^= d[3];
+    s[ 2] ^= d[2]; s[ 8] ^= d[3]; s[14] ^= d[4]; s[15] ^= d[0]; s[21] ^= d[1];
 
-        // Rho and Pi steps
-        b[0] = _state[0]; // rotate left by 0 bits
-        b[8] = ROT_L( _state[5], 36 );
-        b[11] = ROT_L( _state[10], 3 );
-        b[19] = ROT_L( _state[15], 41 );
-        b[22] = ROT_L( _state[20], 18 );
+    b[ 0] =       s[ 0]     ; b[ 1] = ROT_L(s[ 6], 44);
+    b[ 2] = ROT_L(s[12], 43); b[ 3] = ROT_L(s[18], 21);
+    b[ 4] = ROT_L(s[24], 14); b[ 5] = ROT_L(s[ 3], 28);
+    b[ 6] = ROT_L(s[ 9], 20); b[ 7] = ROT_L(s[10],  3);
+    b[ 8] = ROT_L(s[16], 45); b[ 9] = ROT_L(s[22], 61);
+    b[10] = ROT_L(s[ 1],  1); b[11] = ROT_L(s[ 7],  6);
+    b[12] = ROT_L(s[13], 25); b[13] = ROT_L(s[19],  8);
+    b[14] = ROT_L(s[20], 18); b[15] = ROT_L(s[ 4], 27);
+    b[16] = ROT_L(s[ 5], 36); b[17] = ROT_L(s[11], 10);
+    b[18] = ROT_L(s[17], 15); b[19] = ROT_L(s[23], 56);
+    b[20] = ROT_L(s[ 2], 62); b[21] = ROT_L(s[ 8], 55);
+    b[22] = ROT_L(s[14], 39); b[23] = ROT_L(s[15], 41);
+    b[24] = ROT_L(s[21],  2);
 
-        b[2] = ROT_L( _state[1], 1 );
-        b[5] = ROT_L( _state[6], 44 );
-        b[13] = ROT_L( _state[11], 10 );
-        b[16] = ROT_L( _state[16], 45 );
-        b[24] = ROT_L( _state[21], 2 );
+    s[ 0] = b[ 0] ^ ((~b[ 1]) & b[ 2]); s[ 1] = b[ 1] ^ ((~b[ 2]) & b[ 3]);
+    s[ 2] = b[ 2] ^ ((~b[ 3]) & b[ 4]); s[ 3] = b[ 3] ^ ((~b[ 4]) & b[ 0]);
+    s[ 4] = b[ 4] ^ ((~b[ 0]) & b[ 1]); s[ 5] = b[ 5] ^ ((~b[ 6]) & b[ 7]);
+    s[ 6] = b[ 6] ^ ((~b[ 7]) & b[ 8]); s[ 7] = b[ 7] ^ ((~b[ 8]) & b[ 9]);
+    s[ 8] = b[ 8] ^ ((~b[ 9]) & b[ 5]); s[ 9] = b[ 9] ^ ((~b[ 5]) & b[ 6]);
+    s[10] = b[10] ^ ((~b[11]) & b[12]); s[11] = b[11] ^ ((~b[12]) & b[13]);
+    s[12] = b[12] ^ ((~b[13]) & b[14]); s[13] = b[13] ^ ((~b[14]) & b[10]);
+    s[14] = b[14] ^ ((~b[10]) & b[11]); s[15] = b[15] ^ ((~b[16]) & b[17]);
+    s[16] = b[16] ^ ((~b[17]) & b[18]); s[17] = b[17] ^ ((~b[18]) & b[19]);
+    s[18] = b[18] ^ ((~b[19]) & b[15]); s[19] = b[19] ^ ((~b[15]) & b[16]);
+    s[20] = b[20] ^ ((~b[21]) & b[22]); s[21] = b[21] ^ ((~b[22]) & b[23]);
+    s[22] = b[22] ^ ((~b[23]) & b[24]); s[23] = b[23] ^ ((~b[24]) & b[20]);
+    s[24] = b[24] ^ ((~b[20]) & b[21]);
 
-        b[4] = ROT_L( _state[2], 62 );
-        b[7] = ROT_L( _state[7], 6 );
-        b[10] = ROT_L( _state[12], 43 );
-        b[18] = ROT_L( _state[17], 15 );
-        b[21] = ROT_L( _state[22], 61 );
-
-        b[1] = ROT_L( _state[3], 28 );
-        b[9] = ROT_L( _state[8], 55 );
-        b[12] = ROT_L( _state[13], 25 );
-        b[15] = ROT_L( _state[18], 21 );
-        b[23] = ROT_L( _state[23], 56 );
-
-        b[3] = ROT_L( _state[4], 27 );
-        b[6] = ROT_L( _state[9], 20 );
-        b[14] = ROT_L( _state[14], 39 );
-        b[17] = ROT_L( _state[19], 8 );
-        b[20] = ROT_L( _state[24], 14 );
-
-        // Chi step
-        _state[0] = b[0] ^ ((~b[5]) & b[10]);
-        _state[5] = b[1] ^ ((~b[6]) & b[11]);
-        _state[10] = b[2] ^ ((~b[7]) & b[12]);
-        _state[15] = b[3] ^ ((~b[8]) & b[13]);
-        _state[20] = b[4] ^ ((~b[9]) & b[14]);
-
-        _state[1] = b[5] ^ ((~b[10]) & b[15]);
-        _state[6] = b[6] ^ ((~b[11]) & b[16]);
-        _state[11] = b[7] ^ ((~b[12]) & b[17]);
-        _state[16] = b[8] ^ ((~b[13]) & b[18]);
-        _state[21] = b[9] ^ ((~b[14]) & b[19]);
-
-        _state[2] = b[10] ^ ((~b[15]) & b[20]);
-        _state[7] = b[11] ^ ((~b[16]) & b[21]);
-        _state[12] = b[12] ^ ((~b[17]) & b[22]);
-        _state[17] = b[13] ^ ((~b[18]) & b[23]);
-        _state[22] = b[14] ^ ((~b[19]) & b[24]);
-
-        _state[3] = b[15] ^ ((~b[20]) & b[0]);
-        _state[8] = b[16] ^ ((~b[21]) & b[1]);
-        _state[13] = b[17] ^ ((~b[22]) & b[2]);
-        _state[18] = b[18] ^ ((~b[23]) & b[3]);
-        _state[23] = b[19] ^ ((~b[24]) & b[4]);
-
-        _state[4] = b[20] ^ ((~b[0]) & b[5]);
-        _state[9] = b[21] ^ ((~b[1]) & b[6]);
-        _state[14] = b[22] ^ ((~b[2]) & b[7]);
-        _state[19] = b[23] ^ ((~b[3]) & b[8]);
-        _state[24] = b[24] ^ ((~b[4]) & b[9]);
-
-        // Iota step
-        _state[0] ^= roundConstants[i];
-    }
-}
-
-////////// Debugging Functions //////////
-
-void SHA3::_printMessageBuffer(){
-    std::cout << "mb = [ ";
-    for( int i = 0; i < _spongeRate/8; i++ ){
-        std::cout << (int)_messageBuffer[i] << " ";
-    }
-    std::cout << "]" << std::endl;
-}
-
-void SHA3::_printSponge(){
-    std::cout << "s = [ " << std::hex;
-    for( int x = 0; x < 5; x++ ){
-        for( int y = 0; y < 5; y++ ){
-            std::cout << _state[x][y] << " ";
-        }
-    }
-    std::cout << std::dec << "]" << std::endl;
+    s[ 0] ^= sc_round_constants_[i];
+  }
 }
