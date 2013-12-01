@@ -11,51 +11,44 @@
 
 typedef unsigned long long keccakLane_t;
 
-class SHA3 : public HashFunction{
- public:
-    SHA3( int digestSize );
-    ~SHA3();
+class SHA3
+  :public HashFunction
+{
+public:
+  SHA3( int digestSize );
+  ~SHA3();
 
-    /// Adds an entire string to the message
-    ///
-    /// @param  string  The string of bytes to add
-    void hashString( const char *str );
+  typedef unsigned char   byte_type;
+  typedef ::std::uint64_t word_type;
+  /// Adds an entire string to the message
+  ///
+  /// @param  string  The string of bytes to add
+  void hashString( const char *str );
 
-    /// Adds an entire hexidecimal string to the message
-    ///
-    /// @param  string  The hex string of bytes to add
-    void hashHexString( const char *str );
+  /// Adds an entire hexidecimal string to the message
+  ///
+  /// @param  string  The hex string of bytes to add
+  void hashHexString( const char *str );
 
-    /// Returns a representation of the digest as a hexidecimal string
-    ///
-    /// @return The hex string, ownership of which is given to the caller
-    char *digestInHex();
+  /// Returns a representation of the digest as a hexidecimal string
+  ///
+  /// @return The hex string, ownership of which is given to the caller
+  char *digestInHex();
+    
+  // Overridden functions from HashFunction
+  int digestSize();
+  void hash  (byte_type const b);
+  void digest(byte_type d[]);
 
-    // Overridden functions from HashFunction
-    int digestSize();
-    void hash( const int b );
-    void digest( unsigned char d[] );
+private:
+  void reset();
+  void transform();
 
- private:
-    int _digestSize; // bytes
-
-    // Round state
-    keccakLane_t _state[25];
-
-    // Digest-length specific Values
-    int _spongeCapacity;
-    int _spongeRate;
-
-    unsigned char *_messageBuffer;  // rate bits wide, defined during construction
-    unsigned char *_bufferLocation; // used for writing and to know when to flush the buffer
-
-    void _reset();
-    void _performRounds( int rounds );
-    void _absorbBuffer();
-
-    // Debugging
-    void _printMessageBuffer();
-    void _printSponge();
+  ::std::size_t index_;
+  ::std::size_t ndigits_;
+  ::std::size_t block_size_;
+  word_type  state_[25];
+  byte_type* block_;
 };
 
 #endif
